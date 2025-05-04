@@ -1,13 +1,13 @@
 {
-  "name": "Skyzopedia Api",
+  "name": "Zecho Api",
   "version": "v3.0.0",
   "description": "Simple and easy to use API for WhatsApp Bot feature.",
   "header": {
     "status": "Active!"
   },
   "apiSettings": {
-    "creator": "Skyzopedia", 
-    "apikey": ["new2025"]
+    "creator": "Zecho", 
+    "apikey": ["new"]
   },
   "links": [
     {
@@ -16,7 +16,7 @@
     },
     {
       "name": "Contact Me",
-      "url": "https://whatsapp.com/channel/0029VaYoztA47XeAhs447Y1s"
+      "url": "https://whatsapp.com/channel/0029Vb631gEAO7RHH7juYl1M"
     }
   ],
   "categories": [
@@ -42,13 +42,13 @@
           "name": "Create Payment",
           "desc": "Create qris payment", 
           "path": "/orderkuota/createpayment?apikey=&amount=&codeqr=", 
-          "innerDesc": "Buy apikey >> wa.me/628386890336"
+          "innerDesc": "Buy apikey >> wa.me/6285194164810"
         },
         {
           "name": "Cek Status",
           "desc": "Cek status payment", 
           "path": "/orderkuota/cekstatus?apikey=&merchant=&keyorkut=", 
-          "innerDesc": "Buy apikey >> wa.me/628386890336"          
+          "innerDesc": "Buy apikey >> wa.me/6285194164810"          
         }
       ]
     },    
