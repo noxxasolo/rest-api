@@ -1,15 +1,14 @@
 const fetch = require('node-fetch');
+const settings = require('./settings.json'); // pastikan path-nya sesuai
 
 module.exports = function(app) {
     app.get('/muslim/kisahnabi', async (req, res) => {
         try {
             const nabi = req.query.nabi;
 
-            // Ambil data dari GitHub
             const response = await fetch(`https://raw.githubusercontent.com/Zhirrr/My-SQL-Results/main/data/dataKisahNabi.json`);
             const data = await response.json();
 
-            // Kalau ada query nabi, filter datanya
             let result = data;
             if (nabi) {
                 const found = data.find(item => item.name.toLowerCase() === nabi.toLowerCase());
@@ -20,7 +19,7 @@ module.exports = function(app) {
             }
 
             res.json({
-                creator: creator,
+                creator: settings.apiSettings.creator,
                 result
             });
 
