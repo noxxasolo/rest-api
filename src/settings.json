@@ -1,12 +1,12 @@
 {
-  "name": "Zecho Api",
+  "name": Galaxy Api",
   "version": "v3.0.0",
   "description": "Simple and easy to use API for WhatsApp Bot feature.",
   "header": {
     "status": "Active!"
   },
   "apiSettings": {
-    "creator": "Zecho", 
+    "creator": "GLX8⚡NØXXΛꪶ𖣂ꫂ", 
     "apikey": ["new"]
   },
   "links": [
@@ -16,7 +16,7 @@
     },
     {
       "name": "Contact Me",
-      "url": "https://whatsapp.com/channel/0029Vb631gEAO7RHH7juYl1M"
+      "url": "https://t.me/noxxasoloo"
     }
   ],
   "categories": [
