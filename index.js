@@ -3,7 +3,7 @@ const chalk = require('chalk');
 const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
-require("./function.js")
+require("./function.js");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,19 +17,34 @@ app.use(cors());
 app.use('/', express.static(path.join(__dirname, 'api-page')));
 app.use('/src', express.static(path.join(__dirname, 'src')));
 
-const settingsPath = path.join(__dirname, './src/settings.json');
-const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
-global.apikey = settings.apiSettings.apikey
+// Load settings.json dengan fallback jika file atau key tidak ada
+let settings = { apiSettings: { apikey: "", creator: "Created Using Noxxa" } };
+try {
+    const settingsPath = path.join(__dirname, './src/settings.json');
+    if (fs.existsSync(settingsPath)) {
+        const fileContent = fs.readFileSync(settingsPath, 'utf-8');
+        const parsed = JSON.parse(fileContent);
+        settings.apiSettings.apikey = parsed?.apiSettings?.apikey || settings.apiSettings.apikey;
+        settings.apiSettings.creator = parsed?.apiSettings?.creator || settings.apiSettings.creator;
+    } else {
+        console.warn(chalk.yellow("⚠ settings.json tidak ditemukan, menggunakan default settings."));
+    }
+} catch (err) {
+    console.error(chalk.red("⚠ Gagal membaca settings.json:"), err.message);
+}
 
+global.apikey = settings.apiSettings.apikey;
+
+// Middleware logging + inject creator ke semua respon
 app.use((req, res, next) => {
-console.log(chalk.bgHex('#FFFF99').hex('#333').bold(` Request Route: ${req.path} `));
-global.totalreq += 1
+    console.log(chalk.bgHex('#FFFF99').hex('#333').bold(` Request Route: ${req.path} `));
+    global.totalreq += 1;
     const originalJson = res.json;
     res.json = function (data) {
         if (data && typeof data === 'object') {
             const responseData = {
-                status: data.status,
-                creator: settings.apiSettings.creator || "Created Using Skyzo",
+                status: data.status ?? true,
+                creator: settings.apiSettings.creator,
                 ...data
             };
             return originalJson.call(this, responseData);
@@ -39,7 +54,7 @@ global.totalreq += 1
     next();
 });
 
-// Api Route
+// Api Route Loader
 let totalRoutes = 0;
 const apiFolder = path.join(__dirname, './src/api');
 fs.readdirSync(apiFolder).forEach((subfolder) => {
@@ -63,7 +78,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/games', (req, res) => {
-  res.sendFile(path.join(__dirname, 'api-page', 'games.html'));
+    res.sendFile(path.join(__dirname, 'api-page', 'games.html'));
 });
 
 app.use((req, res, next) => {
