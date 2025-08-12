@@ -8,9 +8,6 @@ require("./function.js")
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Inisialisasi global variable
-global.totalreq = 0;
-
 app.enable("trust proxy");
 app.set("json spaces", 2);
 
@@ -22,18 +19,16 @@ app.use('/src', express.static(path.join(__dirname, 'src')));
 
 const settingsPath = path.join(__dirname, './src/settings.json');
 const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
-global.apikey = settings.apiSettings.apikey;
-global.creator = settings.apiSettings.creator; // biar bisa dipakai di semua route
+global.apikey = settings.apiSettings.apikey
 
 app.use((req, res, next) => {
-    console.log(chalk.bgHex('#FFFF99').hex('#333').bold(` Request Route: ${req.path} `));
-    global.totalreq += 1;
-
+console.log(chalk.bgHex('#FFFF99').hex('#333').bold(` Request Route: ${req.path} `));
+global.totalreq += 1
     const originalJson = res.json;
     res.json = function (data) {
         if (data && typeof data === 'object') {
             const responseData = {
-                status: data.status ?? true,
+                status: data.status,
                 creator: settings.apiSettings.creator || "Created Using Skyzo",
                 ...data
             };
@@ -53,13 +48,9 @@ fs.readdirSync(apiFolder).forEach((subfolder) => {
         fs.readdirSync(subfolderPath).forEach((file) => {
             const filePath = path.join(subfolderPath, file);
             if (path.extname(file) === '.js') {
-                try {
-                    require(filePath)(app);
-                    totalRoutes++;
-                    console.log(chalk.bgHex('#FFFF99').hex('#333').bold(` Loaded Route: ${path.basename(file)} `));
-                } catch (err) {
-                    console.error(chalk.red(` Error loading route ${file}: ${err.message}`));
-                }
+                require(filePath)(app);
+                totalRoutes++;
+                console.log(chalk.bgHex('#FFFF99').hex('#333').bold(` Loaded Route: ${path.basename(file)} `));
             }
         });
     }
@@ -71,15 +62,17 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'api-page', 'index.html'));
 });
 
-// 404 Handler
-app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'api-page', '404.html'));
+app.get('/games', (req, res) => {
+  res.sendFile(path.join(__dirname, 'api-page', 'games.html'));
 });
 
-// 500 Handler
+app.use((req, res, next) => {
+    res.status(404).sendFile(process.cwd() + "/api-page/404.html");
+});
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).sendFile(path.join(__dirname, 'api-page', '500.html'));
+    res.status(500).sendFile(process.cwd() + "/api-page/500.html");
 });
 
 app.listen(PORT, () => {
