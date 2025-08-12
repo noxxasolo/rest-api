@@ -95,7 +95,7 @@ const upload = multer({ storage });
 
 // halaman AI
 app.get('/ai', (req, res) => {
-    res.sendFile(path.join(__dirname, 'ai.html'));
+    res.sendFile(path.join(__dirname, 'api-page', 'ai.html'));
 });
 
 // API tanya AI
