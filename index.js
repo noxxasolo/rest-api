@@ -62,6 +62,10 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'api-page', 'index.html'));
 });
 
+app.get('/games', (req, res) => {
+    res.sendFile(path.join(__dirname, 'api-page', 'games.html'));
+});
+
 app.use((req, res, next) => {
     res.status(404).sendFile(process.cwd() + "/api-page/404.html");
 });
