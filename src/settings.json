@@ -40,51 +40,6 @@
       ]
     },
     {
-      "name": "Maker",
-      "items": [
-        {
-          "name": "Emoji to PNG",
-          "desc": "Convert emoji to PNG image",
-          "path": "/maker/emoji2png?text="
-        },
-        {
-          "name": "Nulis",
-          "desc": "Generate handwritten text image",
-          "path": "/maker/nulis?text="
-        },
-        {
-          "name": "Dadu",
-          "desc": "Generate dice image",
-          "path": "/maker/dadu"
-        },
-        {
-          "name": "TTP",
-          "desc": "Text to sticker PNG",
-          "path": "/maker/ttp?text="
-        },
-        {
-          "name": "ATTP",
-          "desc": "Animated text to PNG",
-          "path": "/maker/attp?text="
-        },
-        {
-          "name": "Harta Tahta",
-          "desc": "Generate Harta Tahta image",
-          "path": "/maker/harta-tahta?text="
-        },
-        {
-          "name": "Skatch",
-          "desc": "Sketch effect image",
-          "path": "/maker/skatch?url="
-        },
-        {
-          "name": "Tololserti",
-          "desc": "Tololserti image generator",
-          "path": "/maker/tololserti?text="
-        }
-      ]
-    },
-    {
       "name": "Orderkuota Gateway",
       "items": [
         {
