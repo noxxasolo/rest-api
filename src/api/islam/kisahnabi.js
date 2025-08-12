@@ -1,5 +1,5 @@
 const fetch = require('node-fetch');
-const settings = require('./settings.json'); // pastikan path-nya sesuai
+const settings = require('../../settings.json');
 
 module.exports = function(app) {
     app.get('/muslim/kisahnabi', async (req, res) => {
@@ -19,7 +19,7 @@ module.exports = function(app) {
             }
 
             res.json({
-                creator: settings.apiSettings.creator,
+                creator: settings.creator,
                 result
             });
 
