@@ -29,7 +29,7 @@ global.totalreq += 1
         if (data && typeof data === 'object') {
             const responseData = {
                 status: data.status,
-                creator: settings.apiSettings.creator || "Created Using Skyzo",
+                creator: settings.apiSettings.creator || "Created Using Galaxy",
                 ...data
             };
             return originalJson.call(this, responseData);
@@ -62,9 +62,77 @@ app.get('/api', (req, res) => {
     res.sendFile(path.join(__dirname, 'api-page', 'index.html'));
 });
 
+// ... semua kode kamu di atas tetap sama
+
 app.get('/games', (req, res) => {
     res.sendFile(path.join(__dirname, 'api-page', 'games.html'));
 });
+
+// =================== Tambahan AI Asisten Galaxy ===================
+const multer = require('multer');
+const fetch = require('node-fetch');
+
+// API Keys Groq
+const apiKeys = [
+    "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",
+    "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",
+    "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",
+    "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"
+];
+function getRandomKey() {
+    return apiKeys[Math.floor(Math.random() * apiKeys.length)];
+}
+
+// folder upload
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// multer storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage });
+
+// halaman AI
+app.get('/ai', (req, res) => {
+    res.sendFile(path.join(__dirname, 'ai.html'));
+});
+
+// API tanya AI
+app.post('/ask', async (req, res) => {
+    try {
+        const { question } = req.body;
+        if (!question) return res.json({ status: false, message: "Pertanyaan tidak boleh kosong." });
+
+        const apiKey = getRandomKey();
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "llama3-70b-8192",
+                messages: [{ role: "user", content: question }]
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) return res.json({ status: false, message: data.error.message });
+
+        const answer = data.choices?.[0]?.message?.content || "Tidak ada jawaban.";
+        res.json({ status: true, question, answer });
+    } catch (err) {
+        res.json({ status: false, message: err.message });
+    }
+});
+
+// API upload file
+app.post('/upload', upload.single('file'), (req, res) => {
+    if (!req.file) return res.json({ status: false, message: "Tidak ada file diupload." });
+    res.json({ status: true, message: "File berhasil diupload!", file: `/uploads/${req.file.filename}` });
+});
+// =================== Akhir Tambahan ===================
 
 app.use((req, res, next) => {
     res.status(404).sendFile(process.cwd() + "/api-page/404.html");
