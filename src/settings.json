@@ -18,7 +18,7 @@
       { "name": "Ai Me", "url": "/ai" },
       { "name": "Games Pingpong", "url": "/games" }
     ]
-  ],
+  ]
   "categories": [
     {
       "name": "OpenAI",
