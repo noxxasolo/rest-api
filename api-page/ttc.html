@@ -1,0 +1,585 @@
+<!DOCTYPE html><html lang="id" data-theme="auto">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tic Tac Toe – Vs Bot, 2 Pemain & Online (WebSocket)</title>
+    <link rel="stylesheet" href="/ttc.css">
+
+</head>
+<body>
+    <header>
+        <a href="/api"><b>Back To Rest Api</b></a>
+    </header>
+  <main class="container">
+    <!-- MENU UTAMA -->
+    <section id="menu" class="card menu">
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Tic Tac Toe</h1>
+      </div>
+      <p class="sub">Main cepat. Pilih mode: Bot, 2 Pemain lokal, atau Online (WebSocket). Desain responsif, suara, animasi, tema terang/gelap.</p>
+      <div class="actions">
+        <button id="btnVsBot" class="btn-primary">Main vs Bot</button>
+        <button id="btnVsPlayer">2 Pemain (Local)</button>
+        <button id="btnOnline">Online (WebSocket)</button>
+      </div><details class="card" style="margin-top:10px">
+    <summary><strong>Pengaturan Online (opsional)</strong></summary>
+    <div class="online-panel" style="margin-top:10px">
+      <div class="online-row">
+        <input id="wsUrl" type="url" placeholder="WS Server URL, contoh: ws://localhost:8080" style="min-width:280px"/>
+        <input id="roomInput" type="text" placeholder="Room ID (mis. ABC123)" style="min-width:200px"/>
+      </div>
+      <div class="online-row">
+        <button id="btnCreate" class="btn-primary">Buat Room</button>
+        <button id="btnJoin">Gabung Room</button>
+      </div>
+      <div class="chip" id="onlineHint">Belum terhubung.</div>
+    </div>
+  </details>
+
+  <div class="row center">
+    <span class="chip">Tip: Ubah tingkat kesulitan & giliran di dalam game.</span>
+  </div>
+</section>
+
+<!-- LAYAR GAME -->
+<section id="game" class="card game hidden">
+  <div class="hud">
+    <div class="left">
+      <strong id="modeLabel">Mode:</strong>
+      <span id="turnLabel" class="chip">Giliran: X</span>
+      <div class="select bot-only">
+        <label for="difficulty" class="chip">Kesulitan</label>
+        <select id="difficulty" title="Kesulitan bot">
+          <option value="easy">Mudah</option>
+          <option value="medium" selected>Sedang</option>
+          <option value="hard">Sulit</option>
+        </select>
+      </div>
+      <div class="select bot-only">
+        <label for="playerMark" class="chip">Pemain</label>
+        <select id="playerMark" title="Pilih X atau O">
+          <option value="X" selected>X</option>
+          <option value="O">O</option>
+        </select>
+      </div>
+    </div>
+    <div class="right">
+      <button id="btnTheme" class="theme-toggle" title="Toggle tema">🌙/☀️</button>
+      <div class="score">
+        <div class="box"><div class="label">Skor X</div><div id="scoreX" class="val">0</div></div>
+        <div class="box"><div class="label">Seri</div><div id="scoreD" class="val">0</div></div>
+        <div class="box"><div class="label">Skor O</div><div id="scoreO" class="val">0</div></div>
+      </div>
+      <div class="row">
+        <button id="btnNewRound">Ronde Baru</button>
+        <button id="btnReset" class="btn-danger">Reset Skor</button>
+        <button id="btnBack" class="btn-ghost">Kembali</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <div id="board" class="board" role="grid" aria-label="Papan Tic Tac Toe"></div>
+  </div>
+
+  <p id="status" class="status">Selamat bermain 👋</p>
+  <div class="footer">Single-file (HTML+CSS+JS) • Suara, Animasi, Tema • Online via WebSocket</div>
+</section>
+
+  </main>  <div id="confetti" class="confetti hidden"></div>  <script>
+    // ====== THEME ======
+    const rootEl = document.documentElement;
+    const btnTheme = document.getElementById('btnTheme');
+    const THEME_KEY = 'ttt_theme';
+    function getSystemTheme(){ return matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; }
+    function applyTheme(t){ rootEl.setAttribute('data-theme', t==='auto'?'auto':t); if(t==='auto'){ rootEl.setAttribute('data-theme', getSystemTheme()); }
+      localStorage.setItem(THEME_KEY, t); }
+    function initTheme(){ const saved = localStorage.getItem(THEME_KEY)||'auto'; applyTheme(saved); }
+    btnTheme.addEventListener('click', ()=>{
+      const current = rootEl.getAttribute('data-theme');
+      const next = current==='light' ? 'dark' : 'light';
+      applyTheme(next);
+    });
+    initTheme();
+
+    // ====== AUDIO (Web Audio API, tanpa file) ======
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioCtx();
+    function beep(freq=600, dur=0.07, type='sine', vol=.05){
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type; o.frequency.value=freq; g.gain.value=vol;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); setTimeout(()=>{ o.stop(); }, dur*1000);
+    }
+    function chord(freqs=[440,554,659], dur=0.18, vol=.05){
+      const now = audioCtx.currentTime; const g = audioCtx.createGain(); g.gain.value=vol; g.connect(audioCtx.destination);
+      const osc = freqs.map(f=>{ const o=audioCtx.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(f,now); o.connect(g); return o; });
+      osc.forEach(o=>o.start()); setTimeout(()=> osc.forEach(o=>o.stop()), dur*1000);
+    }
+
+    // ====== CONFETTI ======
+    const confettiEl = document.getElementById('confetti');
+    function fireConfetti(){
+      confettiEl.innerHTML=''; confettiEl.classList.remove('hidden');
+      const colors=['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899'];
+      for(let i=0;i<80;i++){
+        const s=document.createElement('span');
+        const left=Math.random()*100; const delay=Math.random()*300; const rot=Math.random()*360;
+        s.style.left=left+'%'; s.style.top='-10vh'; s.style.background=colors[Math.floor(Math.random()*colors.length)];
+        s.style.transform=`rotate(${rot}deg)`; s.style.animationDelay=delay+'ms';
+        confettiEl.appendChild(s);
+      }
+      setTimeout(()=> confettiEl.classList.add('hidden'), 1800);
+    }
+
+    // ====== STATE ======
+    const menuEl = document.getElementById('menu');
+    const gameEl = document.getElementById('game');
+    const boardEl = document.getElementById('board');
+    const turnLabel = document.getElementById('turnLabel');
+    const modeLabel = document.getElementById('modeLabel');
+    const statusEl = document.getElementById('status');
+    const selectDiff = document.getElementById('difficulty');
+    const selectMark = document.getElementById('playerMark');
+    const scoreXEl = document.getElementById('scoreX');
+    const scoreOEl = document.getElementById('scoreO');
+    const scoreDEl = document.getElementById('scoreD');
+
+    const btnVsBot = document.getElementById('btnVsBot');
+    const btnVsPlayer = document.getElementById('btnVsPlayer');
+    const btnOnline = document.getElementById('btnOnline');
+    const btnNewRound = document.getElementById('btnNewRound');
+    const btnReset = document.getElementById('btnReset');
+    const btnBack = document.getElementById('btnBack');
+
+    const wsUrlInput = document.getElementById('wsUrl');
+    const roomInput = document.getElementById('roomInput');
+    const btnCreate = document.getElementById('btnCreate');
+    const btnJoin = document.getElementById('btnJoin');
+    const onlineHint = document.getElementById('onlineHint');
+
+    const WINS = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    let state = {
+      mode: 'bot',
+      board: Array(9).fill(''),
+      turn: 'X',
+      scores: { X:0, O:0, D:0 },
+      over: false,
+      // online
+      ws: null,
+      room: null,
+      myMark: null,
+    };
+
+    // Persist skor di localStorage per mode
+    const keyScore = (mode)=> `ttt_scores_${mode}`;
+    function loadScores(){
+      try{ const s = JSON.parse(localStorage.getItem(keyScore(state.mode))||'{}');
+        if(typeof s.X==='number') state.scores.X = s.X;
+        if(typeof s.O==='number') state.scores.O = s.O;
+        if(typeof s.D==='number') state.scores.D = s.D;
+      }catch{}
+      renderScores();
+    }
+    function saveScores(){
+      try{ localStorage.setItem(keyScore(state.mode), JSON.stringify(state.scores)); }catch{}
+    }
+
+    // ====== UI HELPERS ======
+    function show(el){ el.classList.remove('hidden'); }
+    function hide(el){ el.classList.add('hidden'); }
+
+    function resetBoard(startTurn='X'){
+      state.board = Array(9).fill('');
+      state.turn = startTurn;
+      state.over = false;
+      statusEl.textContent = 'Giliran pemain '+state.turn;
+      turnLabel.textContent = 'Giliran: '+state.turn;
+      renderBoard();
+    }
+
+    function renderScores(){
+      scoreXEl.textContent = state.scores.X;
+      scoreOEl.textContent = state.scores.O;
+      scoreDEl.textContent = state.scores.D;
+    }
+
+    function renderBoard(){
+      boardEl.innerHTML = '';
+      state.board.forEach((mark, i)=>{
+        const btn = document.createElement('button');
+        btn.className = 'cell';
+        btn.setAttribute('data-idx', i);
+        btn.setAttribute('aria-label', `Kotak ${i+1}`);
+        btn.textContent = mark;
+        if(state.over) btn.classList.add('disabled');
+        btn.addEventListener('click', onCellClick);
+        boardEl.appendChild(btn);
+      });
+    }
+
+    function setStatus(msg){ statusEl.textContent = msg; }
+
+    function switchTurn(){
+      state.turn = state.turn === 'X' ? 'O' : 'X';
+      turnLabel.textContent = 'Giliran: ' + state.turn;
+    }
+
+    function checkWinner(board){
+      for(const line of WINS){
+        const [a,b,c] = line;
+        if(board[a] && board[a]===board[b] && board[a]===board[c]){
+          return { winner: board[a], line };
+        }
+      }
+      if(board.every(x=>x)) return { winner: 'D', line: []};
+      return null;
+    }
+
+    function highlightResult(result){
+      if(result.line && result.line.length){
+        [...boardEl.children].forEach((el, i)=>{
+          if(result.line.includes(i)) el.classList.add('win');
+          else el.classList.add('lose');
+        });
+        fireConfetti();
+      }
+    }
+
+    function endGame(result){
+      state.over = true;
+      if(result.winner==='D'){
+        state.scores.D++;
+        setStatus('Seri! Ronde baru?');
+        beep(330, .09, 'sawtooth', .04);
+        beep(220, .09, 'sawtooth', .04);
+      } else {
+        state.scores[result.winner]++;
+        setStatus(`Pemenang: ${result.winner}!`);
+        chord([523,659,784], .22, .06);
+      }
+      highlightResult(result);
+      saveScores();
+      renderScores();
+      [...boardEl.children].forEach(el=>el.classList.add('disabled'));
+
+      // broadcast online end
+      if(state.mode==='online' && state.ws && state.ws.readyState===1){
+        sendWS({type:'state', board: state.board, turn: state.turn, over:true, scores: state.scores});
+      }
+    }
+
+    // ====== GAMEPLAY ======
+    function onCellClick(e){
+      const idx = +e.currentTarget.getAttribute('data-idx');
+      if(state.board[idx] || state.over) return;
+
+      if(state.mode==='online' && state.myMark!==state.turn){
+        // bukan giliran kamu
+        beep(180,.05,'square',.03);
+        return;
+      }
+
+      moveAt(idx, state.turn, true);
+
+      const res1 = checkWinner(state.board);
+      if(res1){ endGame(res1); return; }
+
+      switchTurn();
+
+      if(state.mode==='bot'){
+        const playerMark = selectMark.value;            // human mark
+        const botMark = playerMark === 'X' ? 'O' : 'X';
+        if(state.turn === botMark){
+          setTimeout(()=> botPlay(botMark, playerMark), 240);
+        }
+      }
+    }
+
+    function moveAt(idx, mark, withSound=false){
+      state.board[idx] = mark;
+      const cell = boardEl.children[idx];
+      if(cell){ cell.textContent = mark; cell.classList.add('disabled','pop'); setTimeout(()=>cell.classList.remove('pop'), 220); }
+      if(withSound) beep(mark==='X'?520:420, .06, 'square', .05);
+
+      // broadcast online move
+      if(state.mode==='online' && state.ws && state.ws.readyState===1){
+        sendWS({type:'move', idx, mark});
+      }
+    }
+
+    // ====== BOT ======
+    function botPlay(botMark, humanMark){
+      if(state.over) return;
+      const diff = selectDiff.value;
+      let idx;
+      idx = winningMove(state.board, botMark);
+      if(idx!==-1){ placeAndResolve(idx, botMark); return; }
+      idx = winningMove(state.board, humanMark);
+      if(idx!==-1){ placeAndResolve(idx, botMark); return; }
+      if(diff==='easy'){
+        idx = randomMove(state.board);
+      } else if(diff==='medium'){
+        if(Math.random()<0.5) idx = randomMove(state.board);
+        else idx = bestMoveMinimax(state.board, botMark, humanMark, 3).index;
+      } else {
+        idx = bestMoveMinimax(state.board, botMark, humanMark, 8).index;
+      }
+      if(idx===undefined || idx===-1) idx = randomMove(state.board);
+      placeAndResolve(idx, botMark);
+    }
+
+    function placeAndResolve(idx, mark){
+      moveAt(idx, mark, true);
+      const res = checkWinner(state.board);
+      if(res){ endGame(res); return; }
+      switchTurn();
+      setStatus('Giliran pemain '+state.turn);
+    }
+
+    function randomMove(board){
+      const free = board.map((v,i)=> v?null:i).filter(v=>v!==null);
+      if(!free.length) return -1;
+      return free[Math.floor(Math.random()*free.length)];
+    }
+
+    function winningMove(board, mark){
+      for(const line of WINS){
+        const [a,b,c] = line; const trio=[board[a],board[b],board[c]];
+        if(trio.filter(v=>v===mark).length===2 && trio.includes('')){
+          if(board[a]==='') return a; if(board[b]==='') return b; if(board[c]==='') return c;
+        }
+      }
+      return -1;
+    }
+
+    function bestMoveMinimax(board, ai, hu, maxDepth=8){
+      const res = minimax(board.slice(), ai, ai, hu, 0, -Infinity, Infinity, maxDepth);
+      let bestScore = -Infinity, bestIdx = -1;
+      for(const r of res.moves){ if(r.score>bestScore){ bestScore=r.score; bestIdx=r.index; } }
+      return { index: bestIdx, score: bestScore };
+    }
+
+    function minimax(board, player, ai, hu, depth, alpha, beta, maxDepth){
+      const check = checkWinner(board);
+      if(check){
+        if(check.winner==='D') return { score: 0, moves: [] };
+        return { score: check.winner===ai ? 10-depth : depth-10, moves: [] };
+      }
+      if(depth>=maxDepth){ return { score: heuristic(board, ai, hu), moves: [] }; }
+      const avail = board.map((v,i)=> v?null:i).filter(v=>v!==null);
+      let bestMoves = [];
+      if(player===ai){ // maximize
+        let best=-Infinity;
+        for(const i of avail){
+          board[i]=player;
+          const val = minimax(board, hu, ai, hu, depth+1, alpha, beta, maxDepth).score;
+          board[i]='';
+          if(val>best){ best=val; bestMoves=[{index:i, score:val}]; }
+          else if(val===best){ bestMoves.push({index:i, score:val}); }
+          alpha=Math.max(alpha,val); if(beta<=alpha) break;
+        }
+        return { score: best, moves: bestMoves };
+      } else { // minimize
+        let best=Infinity;
+        for(const i of avail){
+          board[i]=player;
+          const val = minimax(board, ai, ai, hu, depth+1, alpha, beta, maxDepth).score;
+          board[i]='';
+          if(val<best){ best=val; bestMoves=[{index:i, score:val}]; }
+          else if(val===best){ bestMoves.push({index:i, score:val}); }
+          beta=Math.min(beta,val); if(beta<=alpha) break;
+        }
+        return { score: best, moves: bestMoves };
+      }
+    }
+
+    function heuristic(board, ai, hu){
+      const lineScore = (line)=>{
+        const vals=line.map(i=>board[i]);
+        const a = vals.filter(v=>v===ai).length;
+        const h = vals.filter(v=>v===hu).length;
+        if(a>0 && h>0) return 0;
+        if(a===2 && h===0) return 5;
+        if(a===1 && h===0) return 2;
+        if(h===2 && a===0) return -4;
+        if(h===1 && a===0) return -1;
+        return 0;
+      };
+      let s=0; for(const L of WINS) s+=lineScore(L);
+      const center = board[4]===''? 0 : (board[4]===ai? 1 : -1);
+      const corners = [0,2,6,8].map(i=> board[i]===''?0:(board[i]===ai? .5 : -.5)).reduce((a,b)=>a+b,0);
+      return s + center + corners;
+    }
+
+    // ====== MODE HANDLERS ======
+    function startGame(mode){
+      state.mode = mode; modeLabel.textContent = 'Mode: ' + (mode==='bot'?'Vs Bot': mode==='pvp'?'2 Pemain':'Online');
+      hide(menuEl); show(gameEl);
+      document.querySelectorAll('.bot-only').forEach(el=> el.style.display = (mode==='bot')?'flex':'none');
+      loadScores();
+      resetBoard('X');
+      maybeBotStarts();
+    }
+
+    function maybeBotStarts(){
+      if(state.mode!=='bot') return;
+      const playerMark = selectMark.value;
+      const botMark = playerMark==='X'?'O':'X';
+      if(state.turn===botMark){ setTimeout(()=> botPlay(botMark, playerMark), 260); }
+    }
+
+    // ====== EVENTS ======
+    btnVsBot.addEventListener('click', ()=> startGame('bot'));
+    btnVsPlayer.addEventListener('click', ()=> startGame('pvp'));
+    btnOnline.addEventListener('click', ()=> startGame('online'));
+
+    btnBack.addEventListener('click', ()=>{ 
+      if(state.ws){ try{ state.ws.close(); }catch{} }
+      hide(gameEl); show(menuEl); 
+    });
+    btnNewRound.addEventListener('click', ()=>{
+      const nextStart = state.turn==='X' ? 'O' : 'X';
+      resetBoard(nextStart);
+      maybeBotStarts();
+      if(state.mode==='online') sendWS({type:'newround', start: nextStart});
+    });
+    btnReset.addEventListener('click', ()=>{
+      state.scores = {X:0,O:0,D:0}; saveScores(); renderScores(); resetBoard('X'); maybeBotStarts();
+      if(state.mode==='online') sendWS({type:'reset'});
+    });
+
+    selectDiff.addEventListener('change', ()=> setStatus('Kesulitan: '+selectDiff.value.toUpperCase()));
+    selectMark.addEventListener('change', ()=>{ resetBoard('X'); maybeBotStarts(); });
+
+    document.addEventListener('keydown',(e)=>{
+      const n = +e.key;
+      if(n>=1 && n<=9 && !state.over && !gameEl.classList.contains('hidden')){
+        const idx = n-1;
+        const cell = boardEl.children[idx];
+        if(cell && !state.board[idx]) cell.click();
+      }
+    });
+
+    // Inisialisasi papan untuk tampilan awal
+    renderBoard();
+
+    // ====== ONLINE (WebSocket) ======
+    function setOnlineHint(t){ onlineHint.textContent = t; }
+    function sendWS(obj){ try{ state.ws.send(JSON.stringify(obj)); }catch(e){} }
+
+    btnCreate.addEventListener('click', ()=>{
+      const url = wsUrlInput.value || 'ws://localhost:8080';
+      const room = roomInput.value.trim() || Math.random().toString(36).slice(2,8).toUpperCase();
+      connectWS(url, room, true);
+    });
+    btnJoin.addEventListener('click', ()=>{
+      const url = wsUrlInput.value || 'ws://localhost:8080';
+      const room = roomInput.value.trim();
+      if(!room){ setOnlineHint('Masukkan Room ID untuk gabung.'); return; }
+      connectWS(url, room, false);
+    });
+
+    function connectWS(url, room, creating){
+      try{ if(state.ws){ state.ws.close(); } }catch{}
+      state.ws = new WebSocket(url);
+      state.room = room; setOnlineHint('Menyambungkan…');
+      state.ws.onopen = ()=>{
+        setOnlineHint('Terhubung ke server.');
+        sendWS({type: creating?'create':'join', room});
+      };
+      state.ws.onclose = ()=>{ setOnlineHint('Terputus.'); };
+      state.ws.onerror = ()=>{ setOnlineHint('Gagal tersambung. Cek URL server.'); };
+      state.ws.onmessage = (ev)=>{
+        const msg = JSON.parse(ev.data||'{}');
+        switch(msg.type){
+          case 'created':
+            state.myMark = 'X';
+            setOnlineHint(`Room dibuat: ${room}. Tunggu lawan gabung.`);
+            break;
+          case 'joined':
+            state.myMark = 'O';
+            setOnlineHint(`Bergabung ke Room: ${room}.`);
+            break;
+          case 'start':
+            if(msg.mark) state.myMark = msg.mark;
+            startGame('online');
+            setStatus('Mode online. Kamu: '+state.myMark);
+            break;
+          case 'move':
+            if(state.board[msg.idx]) return;
+            moveAt(msg.idx, msg.mark, true);
+            const r = checkWinner(state.board); if(r){ endGame(r); return; }
+            switchTurn();
+            break;
+          case 'state':
+            state.board = msg.board; state.turn = msg.turn; state.over = !!msg.over; state.scores = msg.scores||state.scores; renderBoard(); renderScores();
+            if(state.over){ const rr=checkWinner(state.board); if(rr) highlightResult(rr); }
+            break;
+          case 'newround':
+            resetBoard(msg.start||'X');
+            break;
+          case 'reset':
+            state.scores={X:0,O:0,D:0}; renderScores(); resetBoard('X');
+            break;
+          case 'error':
+            setOnlineHint('Error: '+msg.message);
+            break;
+        }
+      };
+    }
+  </script>  <!--
+  ==========================
+  Minimal WebSocket Server (Node.js) – Simpan sebagai server.js
+  ==========================
+  const http = require('http');
+  const WebSocket = require('ws');
+
+  const server = http.createServer();
+  const wss = new WebSocket.Server({ server });
+  const rooms = new Map(); // roomId -> [ws1, ws2]
+
+  function send(ws, obj){ try{ ws.send(JSON.stringify(obj)); }catch(e){} }
+  function broadcast(clients, obj){ clients.forEach(c=> send(c, obj)); }
+
+  wss.on('connection', (ws)=>{
+    ws.room = null;
+    ws.on('message', (data)=>{
+      let msg={}; try{ msg=JSON.parse(data); }catch{}
+      if(msg.type==='create'){
+        const id = msg.room || Math.random().toString(36).slice(2,8).toUpperCase();
+        rooms.set(id, [ws]); ws.room=id; send(ws,{type:'created', room:id, mark:'X'});
+      } else if(msg.type==='join'){
+        const list = rooms.get(msg.room)||[];
+        if(list.length>=2){ return send(ws,{type:'error', message:'Room penuh'}); }
+        list.push(ws); rooms.set(msg.room, list); ws.room=msg.room; send(ws,{type:'joined', room:msg.room, mark:'O'});
+        broadcast(list, {type:'start'});
+      } else if(msg.type==='move' && ws.room){
+        const list = rooms.get(ws.room)||[]; broadcast(list, {type:'move', idx: msg.idx, mark: msg.mark});
+      } else if(msg.type==='state' && ws.room){
+        const list = rooms.get(ws.room)||[]; broadcast(list, {type:'state', board: msg.board, turn: msg.turn, over: msg.over, scores: msg.scores});
+      } else if(msg.type==='newround' && ws.room){
+        const list = rooms.get(ws.room)||[]; broadcast(list, {type:'newround', start: msg.start});
+      } else if(msg.type==='reset' && ws.room){
+        const list = rooms.get(ws.room)||[]; broadcast(list, {type:'reset'});
+      }
+    });
+    ws.on('close', ()=>{
+      if(ws.room){
+        const list = rooms.get(ws.room)||[]; const idx = list.indexOf(ws); if(idx>-1) list.splice(idx,1);
+        if(list.length===0) rooms.delete(ws.room);
+      }
+    });
+  });
+
+  const PORT = process.env.PORT || 8080;
+  server.listen(PORT, ()=> console.log('WS server on :'+PORT));
+  --></body>
+</html>
