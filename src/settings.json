@@ -19,12 +19,20 @@
       "url": "https://t.me/AboutGlxyy"
     },
     {
+      "name": "Room Me",
+      "url": "https://t.me/roompublicnoxaa"
+    },
+    {
       "name": "Ai Me",
       "url": "/ai"
     },
     {
       "name": "Games Pingpong",
       "url": "/games"
+    },
+    {
+      "name": "Games Tictactoe",
+      "url": "/ttc"
     }
   ],
   "categories": [
@@ -328,6 +336,11 @@
           "desc": "Search apk playstore",
           "path": "/search/playstore?q="
         }, 
+        {
+          "name": "Spotify",
+          "desc": "Search music, artist, album, playlist",
+          "path": "/search/spotify?q="
+        },
         {
           "name": "Npm Search",
           "desc": "Search npm nodejs",
