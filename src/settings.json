@@ -10,15 +10,9 @@
     "apikey": ["new"]
   },
   "links": [
-    [
-      { "name": "Contact Me", "url": "https://t.me/noxxasoloo" },
-      { "name": "Channel Me", "url": "https://t.me/AboutGlxyy" }
-    ],
-    [
-      { "name": "Ai Me", "url": "/ai" },
-      { "name": "Games Pingpong", "url": "/games" }
-    ]
-  ]
+    [{ "name": "Contact Me", "url": "https://t.me/noxxasoloo" }, { "name": "Channel Me", "url": "https://t.me/AboutGlxyy" }],
+    [{ "name": "Ai Me", "url": "/ai" }, { "name": "Games Pingpong", "url": "/games" }]
+  ],
   "categories": [
     {
       "name": "OpenAI",
