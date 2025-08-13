@@ -72,6 +72,10 @@ app.get('/ttc', (req, res) => {
     res.sendFile(path.join(__dirname, 'api-page', 'ttc.html'));
 });
 
+app.get('/about', (req, res) => {
+    res.sendFile(path.join(__dirname, 'api-page', 'about.html'));
+});
+
 // =================== Tambahan AI Asisten Galaxy ===================
 const multer = require('multer');
 const fetch = require('node-fetch');
