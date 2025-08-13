@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About — Profil</title>
+  <link rel="stylesheet" href="about.css" />
+  <meta name="theme-color" content="#0ea5e9" />
+
+</head>
+<body>
+    <header>
+        <a href="/api"><b>Back To Rest Api</b></a>
+    </header>
+  <div class="bg"></div>
+  <main class="container">
+    <header class="header">
+      <div class="avatar-wrap">
+        <img id="avatar" src="https://files.catbox.moe/radgj9.jpg" alt="Foto Profil" />
+      </div>
+      <div class="identity">
+        <h1 id="name">GLX8⚡NØXXΛꪶ𖣂ꫂ</h1>
+        <p id="tagline">Developer iseng yang suka Bikin Project, Ketika lagi gabut. ☕️</p>
+      </div>
+    </header>
+    <section class="grid">
+      <article class="card clock">
+        <h2>Jam Real-time</h2>
+        <p class="sub">Zona: Asia/Makassar (WITA)</p>
+        <div id="clock" class="big"></div>
+        <div id="date" class="muted"></div>
+      </article>
+      <article class="card battery">
+        <h2>Baterai Perangkat</h2>
+        <div id="battery-status" class="row">
+          <div class="bar"><div id="battery-bar" class="bar-fill" style="width:0%"></div></div>
+          <div class="stat">
+            <div id="battery-pct">—%</div>
+            <div id="battery-extra" class="muted">Mengecek dukungan…</div>
+          </div>
+        </div>
+      </article>
+      <article class="card device">
+        <h2>Perangkat</h2>
+        <ul class="specs">
+          <li><span>OS</span><strong id="os-name">—</strong></li>
+          <li><span>Android</span><strong id="android-ver">—</strong></li>
+          <li><span>Browser</span><strong id="browser-name">—</strong></li>
+        </ul>
+      </article>
+      <article class="card skills" id="skills" data-default-html="60" data-default-css="25" data-default-js="15">
+        <div class="row row-head">
+          <h2>Komposisi Project</h2>
+          <button id="reload-btn" class="btn" type="button" title="Muat ulang dari API">↻</button>
+        </div>
+        <p class="sub" id="api-status">Sumber: API</p>
+        <div class="skill"><div class="label">HTML <span id="html-val" class="val">0%</span></div><div class="bar"><div id="html-bar" class="bar-fill"></div></div></div>
+        <div class="skill"><div class="label">CSS <span id="css-val" class="val">0%</span></div><div class="bar"><div id="css-bar" class="bar-fill"></div></div></div>
+        <div class="skill"><div class="label">JS <span id="js-val" class="val">0%</span></div><div class="bar"><div id="js-bar" class="bar-fill"></div></div></div>
+      </article>
+      <article class="card aboutme">
+        <h2>Tentang Saya</h2>
+        <p>Hai! Saya <strong>Rafli</strong>. Hobi eksperimen dengan Node/Express, scraping, Module, dan bikin UI simple yang licin.</p>
+        <p>Kontak cepat? DM aja. Proyek favorit belakangan ini: Script Bot Whatsapp, integrasi Play Store search, generator API, dan game HTML kecil-kecilan.</p>
+      </article>
+    </section>
+    <footer class="footer">
+      <p>© <span id="year"></span> GLX8⚡NØXXΛꪶ𖣂ꫂ — Website Rest Api Yang Dibuat dengan HTML, CSS, dan JS.</p>
+    </footer>
+  </main>
+  <script>
+    const $$ = (sel, el=document) => el.querySelector(sel);
+    const fmt2 = (n) => n.toString().padStart(2, '0');
+    const clampPct = (v) => Math.max(0, Math.min(100, Math.round(v)));
+    function animateBar(el, to) {
+      const start = parseFloat(el.style.width) || 0;
+      const end = clampPct(to);
+      const dur = 500;
+      const t0 = performance.now();
+      function step(t) {
+        const k = Math.min(1, (t - t0) / dur);
+        const val = start + (end - start) * k;
+        el.style.width = val + '%';
+        if (k < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    const timeFmt = new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Makassar' });
+    const dateFmt = new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Asia/Makassar' });
+    function tickClock() {
+      const now = new Date();
+      $$('#clock').textContent = timeFmt.format(now);
+      $$('#date').textContent = dateFmt.format(now);
+    }
+    tickClock();
+    setInterval(tickClock, 1000);
+    async function initBattery() {
+      const pct = $$('#battery-pct');
+      const extra = $$('#battery-extra');
+      const bar = $$('#battery-bar');
+      if (!('getBattery' in navigator)) {
+        pct.textContent = '—';
+        extra.textContent = 'Battery API tidak didukung';
+        bar.style.width = '0%';
+        return;
+      }
+      try {
+        const batt = await navigator.getBattery();
+        const update = () => {
+          const val = Math.round(batt.level * 100);
+          pct.textContent = val + '%';
+          extra.textContent = batt.charging ? 'Mengisi daya' : 'Tidak mengisi';
+          animateBar(bar, val);
+        };
+        update();
+        batt.addEventListener('levelchange', update);
+        batt.addEventListener('chargingchange', update);
+      } catch (e) {
+        extra.textContent = 'Gagal membaca baterai';
+      }
+    }
+    initBattery();
+    function parseDevice() {
+      const ua = navigator.userAgent;
+      const m = ua.match(/Android\\s([\\d_.]+)/i);
+      const androidVer = m ? m[1].replace(/_/g, '.') : null;
+      $$('#os-name').textContent = m ? 'Android' : (navigator.platform || '—');
+      $$('#android-ver').textContent = androidVer || 'Bukan Android / Tidak terdeteksi';
+      const browser = ua.includes('Edg') ? 'Edge' : ua.includes('OPR') ? 'Opera' : ua.includes('Chrome') ? 'Chrome' : ua.includes('Firefox') ? 'Firefox' : ua.includes('Safari') ? 'Safari' : 'Browser';
+      $$('#browser-name').textContent = browser;
+    }
+    parseDevice();
+    const API_URL = "https://rest-api-galaxy.vercel.app/";
+    async function loadSkills() {
+      const box = $$('#skills');
+      const def = {
+        html: Number(box.dataset.defaultHtml || 60),
+        css: Number(box.dataset.defaultCss || 25),
+        js: Number(box.dataset.defaultJs || 15)
+      };
+      let data = null;
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 3500);
+        const res = await fetch(API_URL, { signal: ctrl.signal, cache: 'no-store' });
+        clearTimeout(t);
+        if (res.ok) {
+          const json = await res.json();
+          if (typeof json.html === 'number' && typeof json.css === 'number' && typeof json.js === 'number') {
+            data = json;
+          }
+        } else {
+          $$('#api-status').textContent = 'Sumber: API offline (pakai default)';
+          $$('#api-status').style.color = '#f87171';
+        }
+      } catch (e) {
+        $$('#api-status').textContent = 'Sumber: API error (pakai default)';
+        $$('#api-status').style.color = '#f87171';
+      }
+      const result = data ?? def;
+      const sum = (result.html + result.css + result.js) || 1;
+      const norm = {
+        html: (result.html / sum) * 100,
+        css: (result.css / sum) * 100,
+        js: (result.js / sum) * 100,
+      };
+      const set = (idBar, idVal, v) => {
+        animateBar($$(idBar), v);
+        $$(idVal).textContent = clampPct(v) + '%';
+      };
+      set('#html-bar', '#html-val', norm.html);
+      set('#css-bar', '#css-val', norm.css);
+      set('#js-bar', '#js-val', norm.js);
+    }
+    loadSkills();
+    $$('#reload-btn').addEventListener('click', loadSkills);
+    $$('#year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
