@@ -1,6 +1,6 @@
 {
   "name": "Galaxy Api",
-  "version": "v3.0.0",
+  "version": "v5.0.0",
   "description": "Simple and easy to use API for WhatsApp Bot feature.",
   "header": {
     "status": "Active!"
@@ -25,6 +25,10 @@
     {
       "name": "About Me",
       "url": "/about"
+    },
+    {
+      "name": "Store Me",
+      "url": "/store"
     },
     {
       "name": "Ai Me",
