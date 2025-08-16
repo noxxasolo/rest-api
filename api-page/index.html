@@ -142,21 +142,21 @@
       </div>
     </div>
   </section>  <!-- CONTACT -->  <section id="contact">
-    <div class="container">
-      <h2>Hubungi Saya</h2>
-      <p class="sub">Siap diskusi project baru? Kirim brief singkatmu.</p>
-      <div class="grid-2">
-        <div class="card">
-          <form onsubmit="event.preventDefault(); alert('Terima kasih! Pesanmu sudah terkirim (dummy).'); this.reset();">
-            <div class="cols">
-              <input required placeholder="Nama" />
-              <input type="email" required placeholder="Email" />
-            </div>
-            <input placeholder="Subjek" />
-            <textarea placeholder="Ceritakan kebutuhanmu..."></textarea>
-            <button class="btn primary" type="submit">Kirim Pesan</button>
-          </form>
-        </div>
+  <div class="container">
+    <h2>Hubungi Saya</h2>
+    <p class="sub">Siap diskusi project baru? Kirim brief singkatmu.</p>
+    <div class="grid-2">
+      <div class="card">
+        <form action="https://formspree.io/f/xvgqnprr" method="POST">
+          <div class="cols">
+            <input type="text" name="nama" required placeholder="Nama" />
+            <input type="email" name="email" required placeholder="Email" />
+          </div>
+          <input type="text" name="subjek" placeholder="Subjek" />
+          <textarea name="pesan" placeholder="Ceritakan kebutuhanmu..."></textarea>
+          <button class="btn primary" type="submit">Kirim Pesan</button>
+        </form>
+      </div>
         <div class="card">
           <h3>Kontak Langsung</h3>
           <p>Email: <a href="mailto:rijalibad74@gmail.com">rijalibad74@gmail.com</a><br>Telegram: <a href="https://t.me/noxxasoloo" target="_blank" rel="noopener">GLX8⚡NØXXΛꪶ𖣂ꫂ</a></p>
