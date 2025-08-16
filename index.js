@@ -58,8 +58,12 @@ fs.readdirSync(apiFolder).forEach((subfolder) => {
 console.log(chalk.bgHex('#90EE90').hex('#333').bold(' Load Complete! ✓ '));
 console.log(chalk.bgHex('#90EE90').hex('#333').bold(` Total Routes Loaded: ${totalRoutes} `));
 
-app.get('/api', (req, res) => {
+app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'api-page', 'index.html'));
+});
+
+app.get('/docs', (req, res) => {
+    res.sendFile(path.join(__dirname, 'api-page', 'docs.html'));
 });
 
 // ... semua kode kamu di atas tetap sama
